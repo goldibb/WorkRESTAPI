@@ -23,25 +23,16 @@ func isValidEmail(email string) bool {
 	return emailRegex.MatchString(email)
 }
 
-// Helper function to check if email already exists (excluding current employee ID for updates)
 func isEmailExists(ctx echo.Context, email string, excludeID ...int32) (bool, error) {
-	_, err := queries.GetEmployeeByEmail(ctx.Request().Context(), email)
+	employee, err := queries.GetEmployeeByEmail(ctx.Request().Context(), email)
 	if err != nil {
-		// If error is "no rows found", email doesn't exist
 		return false, nil
 	}
 
-	// If we have an excludeID (for updates), check if it's the same employee
 	if len(excludeID) > 0 {
-		employee, err := queries.GetEmployeeByEmail(ctx.Request().Context(), email)
-		if err != nil {
-			return false, err
-		}
-		// If the email belongs to the same employee being updated, it's ok
 		return employee.ID != excludeID[0], nil
 	}
 
-	// Email exists and it's not an update scenario
 	return true, nil
 }
 
@@ -108,6 +99,24 @@ func CreateEmployee(c echo.Context) error {
 				return c.JSON(409, map[string]string{"error": "Email already exists"})
 			}
 
+			if len(employeeParams.Name) < 2 || len(employeeParams.Name) > 50 {
+				return c.JSON(400, map[string]string{"error": "Name must be between 2 and 50 characters"})
+			}
+			if len(employeeParams.Surname) < 2 || len(employeeParams.Surname) > 50 {
+				return c.JSON(400, map[string]string{"error": "Surname must be between 2 and 50 characters"})
+			}
+			// Check if name and surname contain only letters and spaces
+			nameValid := regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(employeeParams.Name)
+			surnameValid := regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(employeeParams.Surname)
+			if !nameValid || !surnameValid {
+				return c.JSON(400, map[string]string{"error": "Name and surname must contain only letters and spaces"})
+			}
+
+			// Validate email length
+			if len(employeeParams.Email) > 255 {
+				return c.JSON(400, map[string]string{"error": "Email must be at most 255 characters long"})
+			}
+
 			employee, err := queries.CreateEmployee(ctx, employeeParams)
 			if err != nil {
 				return c.JSON(500, map[string]string{"error": "Failed to create employee"})
@@ -132,6 +141,24 @@ func CreateEmployee(c echo.Context) error {
 		}
 		if emailExists {
 			return c.JSON(409, map[string]string{"error": "Email already exists"})
+		}
+
+		if len(name) < 2 || len(name) > 50 {
+			return c.JSON(400, map[string]string{"error": "Name must be between 2 and 50 characters"})
+		}
+		if len(surname) < 2 || len(surname) > 50 {
+			return c.JSON(400, map[string]string{"error": "Surname must be between 2 and 50 characters"})
+		}
+		// Check if name and surname contain only letters and spaces
+		nameValid := regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(name)
+		surnameValid := regexp.MustCompile(`^[a-zA-Z\s]+$`).MatchString(surname)
+		if !nameValid || !surnameValid {
+			return c.JSON(400, map[string]string{"error": "Name and surname must contain only letters and spaces"})
+		}
+
+		// Validate email length
+		if len(email) > 255 {
+			return c.JSON(400, map[string]string{"error": "Email must be at most 255 characters long"})
 		}
 
 		employeeParams = internals.CreateEmployeeParams{
@@ -192,7 +219,7 @@ func UpdateEmployee(c echo.Context) error {
 			}
 
 			// Check if email already exists (excluding current employee)
-			emailExists, err := isEmailExists(c, jsonParams.Email, int32(id))
+			emailExists, err := isEmailExists(c, jsonParams.Email, currentEmployee.ID)
 			if err != nil {
 				return c.JSON(500, map[string]string{"error": "Failed to check email existence"})
 			}
@@ -217,7 +244,7 @@ func UpdateEmployee(c echo.Context) error {
 		}
 
 		// Check if email already exists (excluding current employee)
-		emailExists, err := isEmailExists(c, email, int32(id))
+		emailExists, err := isEmailExists(c, email, currentEmployee.ID)
 		if err != nil {
 			return c.JSON(500, map[string]string{"error": "Failed to check email existence"})
 		}
@@ -248,6 +275,15 @@ func DeleteEmployee(c echo.Context) error {
 	if err != nil {
 		return c.JSON(400, map[string]string{"error": "Invalid ID format"})
 	}
+
+	// Check if employee has related sales before deleting
+	sales, err := queries.GetSalesByEmployee(ctx, int32(id))
+	if err == nil && len(sales) > 0 {
+		return c.JSON(400, map[string]string{
+			"error": "Cannot delete employee with existing sales",
+		})
+	}
+
 	err = queries.DeleteEmployee(ctx, int32(id))
 	if err != nil {
 		return c.JSON(404, map[string]string{"error": "Employee not found"})
@@ -311,6 +347,12 @@ func CreateSale(c echo.Context) error {
 			if req.Category == "" {
 				return c.JSON(400, map[string]string{"error": "Category is required"})
 			}
+
+			// Use current time if SaleDate is zero
+			if req.SaleDate.IsZero() {
+				req.SaleDate = time.Now()
+			}
+
 			saleParams := internals.CreateSaleParams{
 				ProductName: req.ProductName,
 				Category:    req.Category,
@@ -333,6 +375,7 @@ func CreateSale(c echo.Context) error {
 	currency := c.QueryParam("currency")
 	priceStr := c.QueryParam("price")
 	employeeIDStr := c.QueryParam("employee_id")
+	sale_dateStr := c.QueryParam("sale_date")
 
 	if productName != "" && category != "" && priceStr != "" && employeeIDStr != "" {
 		price, err := strconv.ParseFloat(priceStr, 64)
@@ -359,12 +402,27 @@ func CreateSale(c echo.Context) error {
 			return c.JSON(400, map[string]string{"error": "Employee not found"})
 		}
 
+		// Parse sale date if provided
+		var saleDate time.Time
+		if sale_dateStr != "" {
+			saleDate, err = parseDate(sale_dateStr)
+			if err != nil {
+				return c.JSON(400, map[string]string{"error": "Invalid sale_date format. Supported formats: 2025-07-10T10:23:54+02:00, 2025-07-10, 10/07/2025, 10-07-2025, 10.07.2025"})
+			}
+			// Validate sale date is not in the future
+			if saleDate.After(time.Now()) {
+				return c.JSON(400, map[string]string{"error": "Sale date cannot be in the future"})
+			}
+		} else {
+			saleDate = time.Now()
+		}
+
 		saleParams := internals.CreateSaleParams{
 			ProductName: productName,
 			Category:    category,
 			Currency:    currency,
 			Price:       fmt.Sprintf("%.2f", price), // Converting float64 -> string
-			SaleDate:    time.Now(),
+			SaleDate:    saleDate,
 			EmployeeID:  int32(employeeID),
 		}
 
@@ -376,7 +434,7 @@ func CreateSale(c echo.Context) error {
 	}
 
 	return c.JSON(400, map[string]string{
-		"error": "Provide sale data either as JSON body or query parameters (product_name, category, price, employee_id)",
+		"error": "Provide sale data either as JSON body or query parameters (product_name, category, price, employee_id, optional: sale_date)",
 	})
 }
 
@@ -750,4 +808,31 @@ func generateQuarterlyReportPDF(employee internals.Employee, sales []internals.S
 	var buf bytes.Buffer
 	pdf.Output(&buf)
 	return &buf
+}
+
+// Helper function to parse date from string with multiple formats
+func parseDate(dateStr string) (time.Time, error) {
+	if dateStr == "" {
+		return time.Now(), nil
+	}
+
+	// Try different date formats
+	formats := []string{
+		time.RFC3339,          // 2025-07-10T10:23:54+02:00
+		"2006-01-02T15:04:05", // 2025-07-10T10:23:54
+		"2006-01-02 15:04:05", // 2025-07-10 10:23:54
+		"2006-01-02",          // 2025-07-10
+		"02/01/2006",          // 10/07/2025
+		"02-01-2006",          // 10-07-2025
+		"02.01.2006",          // 10.07.2025
+		"02012006",
+	}
+
+	for _, format := range formats {
+		if parsedTime, err := time.Parse(format, dateStr); err == nil {
+			return parsedTime, nil
+		}
+	}
+
+	return time.Time{}, fmt.Errorf("invalid date format")
 }
