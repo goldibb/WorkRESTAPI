@@ -7,3 +7,8 @@ sql:
       go:
         package: "internals"
         out: "internals"
+        overrides:
+          - db_type: "decimal"
+            go_type: "float64"
+          - db_type: "numeric"
+            go_type: "float64"

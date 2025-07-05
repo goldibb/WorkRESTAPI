@@ -1,4 +1,4 @@
--- Tabela pracowników
+-- Employees table
 CREATE TABLE IF NOT EXISTS employees (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS employees (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabela sprzedaży
+-- Sales table
 CREATE TABLE IF NOT EXISTS sales (
     id SERIAL PRIMARY KEY,
     product_name VARCHAR(255) NOT NULL,
@@ -21,13 +21,13 @@ CREATE TABLE IF NOT EXISTS sales (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Indeksy dla optymalizacji
+-- Indexes
 CREATE INDEX IF NOT EXISTS idx_employees_email ON employees(email);
 CREATE INDEX IF NOT EXISTS idx_sales_employee_id ON sales(employee_id);
 CREATE INDEX IF NOT EXISTS idx_sales_sale_date ON sales(sale_date);
 CREATE INDEX IF NOT EXISTS idx_sales_category ON sales(category);
 
--- Trigger do automatycznego aktualizowania updated_at
+-- Trigger to update the updated_at column on update
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN

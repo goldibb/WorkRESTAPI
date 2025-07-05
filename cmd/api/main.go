@@ -1,15 +1,19 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 
-	"github.com/jackc/pgx"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
+	//"github.com/pressly/goose/v3"
+
+	internals "WorkRESTAPI/internal"
 	"WorkRESTAPI/internal/server"
 )
 
@@ -33,9 +37,11 @@ func getEnvWithDefault(key, defaultValue string) string {
 
 func main() {
 	// Build database URL
-	databaseURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable&search_path=%s",
-		username, password, host, port, database, schema)
+	databaseURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		username, password, host, port, database)
 
+	log.Printf("DB Config: user=%s, host=%s, port=%s, db=%s, schema=%s",
+		username, host, port, database, schema)
 	e := echo.New()
 
 	// Middleware
@@ -49,21 +55,16 @@ func main() {
 			"service": "WorkRESTAPI",
 		})
 	})
-
-	// Register all routes from internal
-	server.RegisterRoutes(e)
-
 	// Connect to the database
-	config, err := pgx.ParseConnectionString(databaseURL)
-	if err != nil {
-		log.Fatalf("Failed to parse connection string: %v", err)
-	}
-
-	db, err := pgx.Connect(config)
+	db, err := sql.Open("pgx/v5", databaseURL)
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v", err)
 	}
 	defer db.Close()
+
+	// Register all routes from internal
+	queries := internals.New(db)
+	server.RegisterRoutes(e, queries)
 
 	// Start server
 	serverPort := os.Getenv("PORT")

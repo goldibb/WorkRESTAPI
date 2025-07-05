@@ -13,6 +13,7 @@
       DB_PASSWORD: ${DB_PASSWORD}
       DB_DATABASE: ${DB_DATABASE}
       DB_PORT: ${DB_PORT}
+      DB_SCHEMA: ${DB_SCHEMA}
     depends_on:
       db:
         condition: service_healthy
