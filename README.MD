@@ -1,110 +1,98 @@
 # Work REST API 🚀
 
-**Nowoczesne REST API do zarządzania pracownikami i sprzedażą z automatycznym generowaniem raportów PDF**
+**Modern REST API for employee and sales management with automatic PDF report generation**
 
 ![Go](https://img.shields.io/badge/Go-1.24-00ADD8?style=for-the-badge&logo=go)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Latest-336791?style=for-the-badge&logo=postgresql)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker)
 ![Echo](https://img.shields.io/badge/Echo-v4-00ADD8?style=for-the-badge)
 
-## 📋 Spis treści
+## ✨ Features
 
-- [Funkcjonalności](#-funkcjonalności)
-- [Technologie](#-technologie)
-- [Architektura](#-architektura)
-- [Instalacja](#-instalacja)
-- [Użycie](#-użycie)
-- [API Endpoints](#-api-endpoints)
-- [Przykłady](#-przykłady)
-- [Testowanie](#-testowanie)
-- [Dane testowe](#-dane-testowe)
+### 👥 Employee Management (CRUD)
+- ✅ Add, edit, delete employees
+- ✅ Data validation (email, field length)
+- ✅ Email uniqueness check
+- ✅ Automatic timestamps (created_at, updated_at)
 
-## ✨ Funkcjonalności
-
-### 👥 Zarządzanie pracownikami (CRUD)
-- ✅ Dodawanie, edycja, usuwanie pracowników
-- ✅ Walidacja danych (email, długość pól)
-- ✅ Sprawdzanie unikalności email
-- ✅ Automatyczne timestamps (created_at, updated_at)
-
-### 💰 Zarządzanie sprzedażą (CRUD)
-- ✅ Dodawanie, edycja, usuwanie sprzedaży
-- ✅ Obsługa różnych walut (PLN, EUR, USD)
-- ✅ Walidacja cen (muszą być > 0)
-- ✅ **Elastyczne formaty dat** - obsługa wielu formatów:
+### 💰 Sales Management (CRUD)
+- ✅ Add, edit, delete sales
+- ✅ Multiple currency support (PLN, EUR, USD)
+- ✅ Price validation (must be > 0)
+- ✅ **Flexible date formats** - supports multiple formats:
   - ISO 8601: `2025-01-15T10:30:00Z`
   - RFC 3339: `2025-01-15T10:30:00+01:00`
-  - Polski format: `15.01.2025 10:30`
-  - Europejski: `15-01-2025 10:30`
-  - Amerykański: `01/15/2025 10:30`
+  - Polish format: `15.01.2025 10:30`
+  - European: `15-01-2025 10:30`
+  - American: `01/15/2025 10:30`
 
-### 📊 Raporty PDF
-- ✅ **Miesięczne raporty** pracowników
-- ✅ **Kwartalne raporty** pracowników
-- ✅ Automatyczne generowanie PDF z gofpdf
-- ✅ Statystyki: liczba sprzedaży, suma przychodów
-- ✅ Szczegółowe tabele wszystkich transakcji
+### 📊 PDF Reports
+- ✅ **Monthly reports** for employees
+- ✅ **Quarterly reports** for employees
+- ✅ Automatic PDF generation with gofpdf
+- ✅ Statistics: sales count, total revenue
+- ✅ Detailed tables of all transactions
 
-### 🔒 Bezpieczeństwo i walidacja
-- ✅ Walidacja email (regex)
-- ✅ Walidacja długości pól
-- ✅ Sprawdzanie unikalności email
-- ✅ Walidacja dat i przedziałów czasowych
-- ✅ Walidacja cen i walut
+### 🔒 Security and Validation
+- ✅ Email validation (regex)
+- ✅ Field length validation
+- ✅ Email uniqueness check
+- ✅ Date and time range validation
+- ✅ Price and currency validation
 
-## 🛠 Technologie
+## 🛠 Technology Stack
 
-| Komponent | Technologia | Wersja |
-|-----------|-------------|---------|
+| Component | Technology | Version |
+|-----------|------------|---------|
 | **Backend** | Go | 1.24 |
 | **Framework** | Echo | v4 |
-| **Baza danych** | PostgreSQL | Latest |
+| **Database** | PostgreSQL | Latest |
 | **ORM/Query Builder** | sqlc | Latest |
-| **Połączenie DB** | pgx/v5 | v5.7.5 |
+| **DB Connection** | pgx/v5 | v5.7.5 |
 | **PDF Generator** | gofpdf | v1.4.3 |
-| **Konteneryzacja** | Docker + Docker Compose | Latest |
+| **Containerization** | Docker + Docker Compose | Latest |
 
-## 🏗 Architektura
+## 🏗 Architecture
 
 ```
 WorkRESTAPI/
-├── cmd/api/                    # Punkt wejścia aplikacji
+├── cmd/api/                    # Application entry point
 │   └── main.go
-├── internal/                   # Logika biznesowa
-│   ├── db.go                   # Połączenie z bazą
-│   ├── models.go               # Modele danych
-│   ├── query.sql.go            # Wygenerowane zapytania (sqlc)
-│   └── server/                 # Serwer HTTP
-│       ├── routes.go           # Endpointy API + logika
-│       └── routes_test.go      # Testy jednostkowe
-├── migrations/                 # Migracje bazy danych
-├── schema.sql                  # Schemat bazy danych
-├── query.sql                   # Definicje zapytań SQL
-├── test_data.sql              # Dane testowe
-├── docker-compose.yml         # Orkiestracja kontenerów
-├── Dockerfile                 # Obraz aplikacji
-└── sqlc.yaml                  # Konfiguracja sqlc
+├── internal/                   # Business logic
+│   ├── db.go                   # Database connection
+│   ├── models.go               # Data models
+│   ├── query.sql.go            # Generated queries (sqlc)
+│   └── server/                 # HTTP server
+│       ├── routes.go           # API endpoints + logic
+│       └── routes_test.go      # Unit tests
+├── migrations/                 # Database migrations
+├── schema.sql                  # Database schema
+├── query.sql                   # SQL query definitions
+├── test_data.sql              # Test data
+├── docker-compose.yml         # Container orchestration
+├── Dockerfile                 # Application image
+└── sqlc.yaml                  # sqlc configuration
 ```
 
-## 🚀 Instalacja
+## 🚀 Installation
 
-### Wymagania
+### Requirements
 - Docker & Docker Compose
-- Go 1.24+ (opcjonalnie, do developmentu)
+- Go 1.24+ (optional, for development)
 
-### Krok 1: Sklonuj repozytorium
+### Step 1: Clone the repository
 ```bash
 git clone <repository-url>
 cd WorkRESTAPI
 ```
 
-### Krok 2: Utwórz plik środowiskowy
+### Step 2: Create environment file
 ```bash
-# Skopiuj przykładowy plik konfiguracyjny
+# Copy the example configuration file
 cp .env.example .env
 ```
 
-Edytuj `.env`:
+Edit `.env`:
 ```env
 PORT=1323
 APP_ENV=production
@@ -116,95 +104,95 @@ DB_PORT=5432
 DB_SCHEMA=public
 ```
 
-### Krok 3: Uruchom z danymi testowymi
+### Step 3: Run with test data
 ```bash
-# Odkomentuj linię w docker-compose.yml dla automatycznego ładowania danych
+# Uncomment the line in docker-compose.yml for automatic data loading
 # - ./test_data.sql:/docker-entrypoint-initdb.d/02-test-data.sql
 
-# Uruchom aplikację
+# Start the application
 docker-compose up -d
 ```
 
-### Krok 4: Sprawdź czy działa
+### Step 4: Verify it's working
 ```bash
-# Sprawdź pracowników
+# Check employees
 curl http://localhost:1323/employees
 
-# Sprawdź sprzedaże
+# Check sales
 curl http://localhost:1323/sales
 ```
 
-## 💡 Użycie
+## 💡 Usage
 
-### Uruchomienie
+### Running the application
 ```bash
-# Uruchom wszystkie serwisy
+# Start all services
 docker-compose up -d
 
-# Sprawdź logi
+# Check logs
 docker-compose logs -f app
 
-# Zatrzymaj serwisy
+# Stop services
 docker-compose down
 ```
 
 ### Development
 ```bash
-# Uruchom tylko bazę danych
+# Run only the database
 docker-compose up -d db
 
-# Uruchom aplikację lokalnie
+# Run the application locally
 go run cmd/api/main.go
 ```
 
 ## 📡 API Endpoints
 
-### 👥 Pracownicy
+### 👥 Employees
 
-| Metoda | Endpoint | Opis |
-|--------|----------|------|
-| `GET` | `/employees` | Pobierz wszystkich pracowników |
-| `GET` | `/employee?id=1` | Pobierz pracownika po ID |
-| `POST` | `/employee` | Dodaj nowego pracownika |
-| `PUT` | `/employee/:id` | Zaktualizuj pracownika |
-| `DELETE` | `/employee/:id` | Usuń pracownika |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/employees` | Get all employees |
+| `GET` | `/employee?id=1` | Get employee by ID |
+| `POST` | `/employee` | Add new employee |
+| `PUT` | `/employee/:id` | Update employee |
+| `DELETE` | `/employee/:id` | Delete employee |
 
-### 💰 Sprzedaże
+### 💰 Sales
 
-| Metoda | Endpoint | Opis |
-|--------|----------|------|
-| `GET` | `/sales` | Pobierz wszystkie sprzedaże |
-| `GET` | `/sale?id=1` | Pobierz sprzedaż po ID |
-| `POST` | `/sale` | Dodaj nową sprzedaż |
-| `PUT` | `/sale/:id` | Zaktualizuj sprzedaż |
-| `DELETE` | `/sale/:id` | Usuń sprzedaż |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/sales` | Get all sales |
+| `GET` | `/sale?id=1` | Get sale by ID |
+| `POST` | `/sale` | Add new sale |
+| `PUT` | `/sale/:id` | Update sale |
+| `DELETE` | `/sale/:id` | Delete sale |
 
-### 📊 Raporty PDF
+### 📊 PDF Reports
 
-| Metoda | Endpoint | Opis |
-|--------|----------|------|
-| `GET` | `/employee/:id/report/month?year=2025&month=1` | Raport miesięczny PDF |
-| `GET` | `/employee/:id/report/quarter?year=2025&quarter=1` | Raport kwartalny PDF |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/employee/:id/report/month?year=2025&month=1` | Monthly PDF report |
+| `GET` | `/employee/:id/report/quarter?year=2025&quarter=1` | Quarterly PDF report |
 
-## 🔧 Przykłady
+## 🔧 Examples
 
-### Dodaj nowego pracownika
+### Add new employee
 ```bash
 curl -X POST http://localhost:1323/employee \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Anna",
     "surname": "Kowalska",
-    "email": "anna.kowalska@firma.pl"
+    "email": "anna.kowalska@company.com"
   }'
 ```
 
-### Dodaj sprzedaż (z elastycznym formatem daty)
+### Add sale (with flexible date format)
 ```bash
 curl -X POST http://localhost:1323/sale \
   -H "Content-Type: application/json" \
   -d '{
-    "product_name": "Laptop Dell",
+    "product_name": "Dell Laptop",
     "category": "Electronics",
     "currency": "PLN",
     "price": 4500.00,
@@ -213,130 +201,94 @@ curl -X POST http://localhost:1323/sale \
   }'
 ```
 
-### Wygeneruj raport PDF
+### Generate PDF report
 ```bash
-# Miesięczny raport pracownika ID=1 za styczeń 2025
+# Monthly report for employee ID=1 for January 2025
 curl "http://localhost:1323/employee/1/report/month?year=2025&month=1" \
-  --output raport_styczen_2025.pdf
+  --output january_2025_report.pdf
 
-# Kwartalny raport pracownika ID=1 za Q1 2025
+# Quarterly report for employee ID=1 for Q1 2025
 curl "http://localhost:1323/employee/1/report/quarter?year=2025&quarter=1" \
-  --output raport_q1_2025.pdf
+  --output q1_2025_report.pdf
 ```
 
-## 🧪 Testowanie
+## 🧪 Testing
 
-### Uruchom testy jednostkowe
+### Run unit tests
 ```bash
-# Wszystkie testy
+# All tests
 go test ./...
 
-# Testy z pokryciem
+# Tests with coverage
 go test -cover ./...
 
-# Testy serwera
+# Server tests
 go test ./internal/server/
 ```
 
-### Testy integracyjne
-```bash
-# Testowanie API (PowerShell)
-.\test_api.ps1
+## 📊 Test Data
 
-# Testowanie API (Bash)
-./test_api.sh
-```
+The project includes ready-to-use test data (`test_data.sql`):
 
-## 📊 Dane testowe
-
-Projekt zawiera gotowe dane testowe (`test_data.sql`):
-
-### 👥 8 pracowników
+### 👥 8 employees
 - Jan Kowalski, Anna Nowak, Piotr Wiśniewski, etc.
-- Różne emaile firm polskich
+- Various Polish company emails
 
-### 💰 60+ sprzedaży
-- **Różne okresy**: styczeń-lipiec 2025 + dane z 2024
-- **Różne kategorie**: Electronics, Furniture, Software
-- **Różne waluty**: PLN, EUR, USD
-- **Różne ceny**: od 79.99 do 8999.00
+### 💰 60+ sales records
+- **Different periods**: January-July 2025 + 2024 data
+- **Different categories**: Electronics, Furniture, Software
+- **Different currencies**: PLN, EUR, USD
+- **Different prices**: from 79.99 to 8999.00
 
-### 📈 Przykładowe dane
+### 📈 Sample data
 ```sql
--- Pracownik
-('Jan', 'Kowalski', 'jan.kowalski@firma.pl')
+-- Employee
+('Jan', 'Kowalski', 'jan.kowalski@company.com')
 
--- Sprzedaże
-('Laptop Dell XPS 13', 'Electronics', 'PLN', 4500.00, '2025-01-15 10:30:00+01:00', 1)
+-- Sales
+('Dell XPS 13 Laptop', 'Electronics', 'PLN', 4500.00, '2025-01-15 10:30:00+01:00', 1)
 ('Office 365', 'Software', 'EUR', 299.99, '2025-01-30 12:00:00+01:00', 8)
 ```
 
-### Ładowanie danych testowych
+### Loading test data
 
-**Sposób 1: Automatyczne (zalecany)**
+**Method 1: Automatic (recommended)**
 ```yaml
-# W docker-compose.yml dodaj:
+# Add to docker-compose.yml:
 - ./test_data.sql:/docker-entrypoint-initdb.d/02-test-data.sql
 ```
 
-**Sposób 2: Ręczne**
+**Method 2: Manual**
 ```bash
-# Załaduj dane do działającej bazy
+# Load data to running database
 docker exec -i workrestapi-db-1 psql -U postgres -d workrestapi < test_data.sql
 ```
 
-## 🔍 Funkcje zaawansowane
+## 🐛 Troubleshooting
 
-### Elastyczne daty
-API automatycznie rozpoznaje i parsuje różne formaty dat:
-- `"2025-01-15T10:30:00Z"` (ISO 8601)
-- `"15.01.2025 10:30"` (Polski)
-- `"15-01-2025 10:30"` (Europejski)
-- `"01/15/2025 10:30"` (Amerykański)
-
-### Walidacje
-- ✅ Email: regex pattern validation
-- ✅ Ceny: muszą być > 0
-- ✅ Daty: sprawdzanie poprawności
-- ✅ Unikalność: email nie może się powtarzać
-
-### Raporty PDF
-- 📊 Statystyki: liczba sprzedaży, suma przychodów
-- 📋 Tabele: szczegółowe dane wszystkich transakcji
-- 📅 Okresy: miesięczne i kwartalne
-- 💾 Auto-download: pliki PDF z nazwami pracowników
-
-## 🐛 Rozwiązywanie problemów
-
-### Problem: Błąd połączenia z bazą
+### Problem: Database connection error
 ```bash
-# Sprawdź czy baza jest uruchomiona
+# Check if database is running
 docker-compose ps
 
-# Sprawdź logi bazy
+# Check database logs
 docker-compose logs db
 
-# Restartuj serwisy
+# Restart services
 docker-compose restart
 ```
 
-### Problem: Zmienne środowiskowe
+### Problem: Environment variables
 ```bash
-# Sprawdź czy plik .env istnieje
+# Check if .env file exists
 ls -la .env
 
-# Sprawdź czy zmienne są załadowane
+# Check if variables are loaded
 docker-compose config
 ```
 
-## 📝 Licencja
+## 📝 License
 
-MIT License - możesz swobodnie używać, modyfikować i dystrybuować.
+MIT License - you can freely use, modify and distribute.
 
 ---
-
-**Autor**: Twój Nick  
-**Ostatnia aktualizacja**: Lipiec 2025  
-**Wersja**: 1.0.0
-
-🌟 **Jeśli projekt Ci się podoba, zostaw gwiazdkę!** ⭐
