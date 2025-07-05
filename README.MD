@@ -7,6 +7,44 @@
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker)
 ![Echo](https://img.shields.io/badge/Echo-v4-00ADD8?style=for-the-badge)
 
+## 📋 Table of Contents
+
+- [Quick Start](#-quick-start)
+- [Features](#-features)
+- [Technology Stack](#-technology-stack)
+- [Architecture](#-architecture)
+- [Installation](#-installation)
+- [Usage](#-usage)
+- [API Endpoints](#-api-endpoints)
+- [Examples](#-examples)
+- [Testing](#-testing)
+- [Test Data](#-test-data)
+- [Troubleshooting](#-troubleshooting)
+
+## ⚡ Quick Start
+
+**Want to try it immediately?**
+
+```bash
+# 1. Clone and enter directory
+git clone <repository-url>
+cd WorkRESTAPI
+
+# 2. Create environment file
+cp .env.example .env
+
+# 3. Enable test data loading (uncomment in docker-compose.yml)
+# - ./test_data.sql:/docker-entrypoint-initdb.d/02-test-data.sql
+
+# 4. Start everything
+docker-compose up -d
+
+# 5. Test it works (wait 30 seconds for startup)
+curl http://localhost:1323/employees
+```
+
+**That's it! 🎉 Your API is running with sample data.**
+
 ## ✨ Features
 
 ### 👥 Employee Management (CRUD)
@@ -80,6 +118,8 @@ WorkRESTAPI/
 - Docker & Docker Compose
 - Go 1.24+ (optional, for development)
 
+> **💡 New to Docker?** Download it from [docker.com](https://www.docker.com/get-started)
+
 ### Step 1: Clone the repository
 ```bash
 git clone <repository-url>
@@ -92,7 +132,7 @@ cd WorkRESTAPI
 cp .env.example .env
 ```
 
-Edit `.env`:
+Edit `.env` (or use defaults):
 ```env
 PORT=1323
 APP_ENV=production
@@ -104,23 +144,34 @@ DB_PORT=5432
 DB_SCHEMA=public
 ```
 
-### Step 3: Run with test data
-```bash
-# Uncomment the line in docker-compose.yml for automatic data loading
-# - ./test_data.sql:/docker-entrypoint-initdb.d/02-test-data.sql
+> **💡 Tip:** You can use the default values above - they work out of the box!
 
-# Start the application
-docker-compose up -d
+### Step 3: Enable test data (recommended for first run)
+In `docker-compose.yml`, uncomment this line:
+```yaml
+# UNCOMMENT THIS LINE:
+- ./test_data.sql:/docker-entrypoint-initdb.d/02-test-data.sql
 ```
 
-### Step 4: Verify it's working
+### Step 4: Start the application
 ```bash
-# Check employees
+# Start all services
+docker-compose up -d
+
+# Wait 30 seconds for startup, then check logs
+docker-compose logs -f app
+```
+
+### Step 5: Verify it's working
+```bash
+# Check employees (should return 8 employees)
 curl http://localhost:1323/employees
 
-# Check sales
+# Check sales (should return 60+ sales)
 curl http://localhost:1323/sales
 ```
+
+**🎉 Success!** Your API is now running at `http://localhost:1323`
 
 ## 💡 Usage
 
@@ -176,6 +227,8 @@ go run cmd/api/main.go
 
 ## 🔧 Examples
 
+> **💡 All examples assume the API is running at `http://localhost:1323`**
+
 ### Add new employee
 ```bash
 curl -X POST http://localhost:1323/employee \
@@ -185,6 +238,18 @@ curl -X POST http://localhost:1323/employee \
     "surname": "Kowalska",
     "email": "anna.kowalska@company.com"
   }'
+```
+
+**Expected response:**
+```json
+{
+  "id": 9,
+  "name": "Anna",
+  "surname": "Kowalska",
+  "email": "anna.kowalska@company.com",
+  "created_at": "2025-07-05T12:30:00Z",
+  "updated_at": "2025-07-05T12:30:00Z"
+}
 ```
 
 ### Add sale (with flexible date format)
@@ -201,6 +266,21 @@ curl -X POST http://localhost:1323/sale \
   }'
 ```
 
+**Expected response:**
+```json
+{
+  "id": 67,
+  "product_name": "Dell Laptop",
+  "category": "Electronics",
+  "currency": "PLN",
+  "price": "4500.00",
+  "sale_date": "2025-01-15T10:30:00+01:00",
+  "employee_id": 1,
+  "created_at": "2025-07-05T12:31:00Z",
+  "updated_at": "2025-07-05T12:31:00Z"
+}
+```
+
 ### Generate PDF report
 ```bash
 # Monthly report for employee ID=1 for January 2025
@@ -210,6 +290,31 @@ curl "http://localhost:1323/employee/1/report/month?year=2025&month=1" \
 # Quarterly report for employee ID=1 for Q1 2025
 curl "http://localhost:1323/employee/1/report/quarter?year=2025&quarter=1" \
   --output q1_2025_report.pdf
+```
+
+**What you'll get:**
+- PDF files with employee sales statistics
+- Tables showing all transactions in the period
+- Total sales count and revenue summary
+
+### Get all employees
+```bash
+curl http://localhost:1323/employees
+```
+
+**Sample response:**
+```json
+[
+  {
+    "id": 1,
+    "name": "Jan",
+    "surname": "Kowalski",
+    "email": "jan.kowalski@company.com",
+    "created_at": "2025-07-05T10:00:00Z",
+    "updated_at": "2025-07-05T10:00:00Z"
+  },
+  ...
+]
 ```
 
 ## 🧪 Testing
@@ -287,8 +392,50 @@ ls -la .env
 docker-compose config
 ```
 
+### Problem: "Connection refused" when testing API
+```bash
+# Wait for services to start (can take 30-60 seconds)
+docker-compose logs -f app
+
+# Check if containers are running
+docker-compose ps
+
+# Try accessing the API
+curl http://localhost:1323/employees
+```
+
+### Problem: Empty response from API
+This usually means test data wasn't loaded:
+```bash
+# Check if test data line is uncommented in docker-compose.yml
+# - ./test_data.sql:/docker-entrypoint-initdb.d/02-test-data.sql
+
+# Or manually load test data
+docker exec -i workrestapi-db-1 psql -U postgres -d workrestapi < test_data.sql
+```
+
+### Problem: Port already in use
+```bash
+# Change port in .env file
+PORT=8080
+
+# Or stop other services using port 1323
+docker-compose down
+```
+
+### Still having issues?
+1. **Check logs:** `docker-compose logs -f`
+2. **Restart everything:** `docker-compose down && docker-compose up -d`
+3. **Clean start:** `docker-compose down -v && docker-compose up -d`
+
 ## 📝 License
 
 MIT License - you can freely use, modify and distribute.
 
 ---
+
+**Author:** Your Name  
+**Last Updated:** July 2025  
+**Version:** 1.0.0
+
+🌟 **If you find this project helpful, please give it a star!** ⭐
