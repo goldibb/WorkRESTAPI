@@ -27,7 +27,7 @@
 
 ```bash
 # 1. Clone and enter directory
-git clone <repository-url>
+git clone https://github.com/goldibb/WorkRESTAPI
 cd WorkRESTAPI
 
 # 2. Create environment file
